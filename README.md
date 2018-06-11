@@ -6,9 +6,11 @@ Transform funtion(){}.toString() to string.
 ## Example
 
 ```js
-const result = funtion(){}.toString();
+const a = funtion(){}.toString();
+const b = funtion(){/*@toString*/};
 ```
 to:
 ```js
-const result = "funtion(){}";
+const a = "funtion(){}";
+const b = "funtion(){}";
 ```
