@@ -1,4 +1,6 @@
 const babelGenerator = require('babel-generator').default;
+const path = require('path');
+const qs = require('querystring');
 
 const hasToStringComment = (t, path) => {
   let result = null;
@@ -19,20 +21,13 @@ const hasToStringComment = (t, path) => {
   return result;
 };
 
-const getCode = (babel, options, node) => {
-  const { types: t } = babel;
-  const code = babelGenerator(node, {minified: true}).code;
-  const ast = babel.transform(`result=${code}`, Object.assign({}, options)).ast;
-  const expressionStatement = ast.program.body[0];
-  if (!t.isExpressionStatement(expressionStatement)) {
-    throw new Error('Parse error');
-  }
-  const functionExpression = expressionStatement.expression.right;
-  if (!t.isFunctionExpression(functionExpression)) {
-    throw new Error('Parse error');
-  }
-  functionExpression.id = undefined;
-  return babelGenerator(functionExpression, {minified: true}).code;
+const replace = (node, replaceTo, babel) => {
+  const {types: t} = babel;
+  node.replaceWith(t.expressionStatement(t.callExpression(t.identifier('require'), [
+    t.stringLiteral(`${path.resolve('./string-script-loader')}?` + qs.stringify({
+      content: babelGenerator(replaceTo).code
+    }) + '!')
+  ])));
 };
 
 module.exports = function (babel) {
@@ -44,14 +39,14 @@ module.exports = function (babel) {
         if (t.isMemberExpression(path.node.callee) && path.node.arguments.length === 0) {
           const memberExpression = path.node.callee;
           if (t.isFunctionExpression(memberExpression.object) && t.isIdentifier(memberExpression.property) && memberExpression.property.name === 'toString') {
-            path.replaceWith(t.stringLiteral(getCode(babel, state.opts, memberExpression.object)));
+            replace(path, memberExpression.object, babel);
           }
         }
       },
       BlockStatement(path, state) {
         if (t.isFunctionExpression(path.parent) && hasToStringComment(t, path)) {
           const functionExpression = path.parentPath;
-          functionExpression.replaceWith(t.stringLiteral(getCode(babel, state.opts, functionExpression.node)));
+          replace(functionExpression, functionExpression.node, babel);
         }
       }
     }
