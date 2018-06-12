@@ -1,5 +1,20 @@
 const babelGenerator = require('babel-generator').default;
 
+const babelOptions = {
+  presets: [
+    ['env', {
+      targets: {
+        browsers: [
+          'Chrome >= 40',
+          'Safari >= 10',
+          'Firefox >= 48'
+        ]
+      }
+    }],
+    'minify'
+  ]
+};
+
 const hasToStringComment = (t, path) => {
   let result = null;
   let comments = null;
@@ -22,14 +37,15 @@ const hasToStringComment = (t, path) => {
 const getCode = (babel, options, node) => {
   const { types: t } = babel;
   const code = babelGenerator(node, {minified: true}).code;
-  const ast = babel.transform(`result=${code}`, Object.assign({}, options)).ast;
+  const result = babel.transform(`result=${code}`, Object.assign({}, babelOptions, options));
+  const ast = result.ast;
   const expressionStatement = ast.program.body[0];
   if (!t.isExpressionStatement(expressionStatement)) {
-    throw new Error('Parse error');
+    throw new Error('Parse error: ' + result.code);
   }
   const functionExpression = expressionStatement.expression.right;
   if (!t.isFunctionExpression(functionExpression)) {
-    throw new Error('Parse error');
+    throw new Error('Parse error: ' + result.code);
   }
   functionExpression.id = undefined;
   return babelGenerator(functionExpression, {minified: true}).code;
