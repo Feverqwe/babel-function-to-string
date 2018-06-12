@@ -22,18 +22,17 @@ const hasToStringComment = (t, path) => {
 const getCode = (babel, options, node) => {
   const { types: t } = babel;
   const code = babelGenerator(node, {minified: true}).code;
-  const ast = babel.transform(`r=${code}`, Object.assign({}, options)).ast;
-  const transformedFunction = ast.program.body[0].expression.right;
-  transformedFunction.id = undefined;
-  let resultCode = babelGenerator(transformedFunction, {minified: true}).code;
-  if (/^"use strict";/.test(resultCode)) {
-    resultCode = resultCode.replace('"use strict";', '');
+  const ast = babel.transform(`result=${code}`, Object.assign({}, options)).ast;
+  const expressionStatement = ast.program.body[0];
+  if (!t.isExpressionStatement(expressionStatement)) {
+    throw new Error('Parse error');
   }
-  const m = /^function/.exec(resultCode);
-  if (!m) {
-    throw new Error('Script was wrapped');
+  const functionExpression = expressionStatement.expression.right;
+  if (!t.isFunctionExpression(functionExpression)) {
+    throw new Error('Parse error');
   }
-  return resultCode;
+  functionExpression.id = undefined;
+  return babelGenerator(functionExpression, {minified: true}).code;
 };
 
 module.exports = function (babel) {

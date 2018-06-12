@@ -4,7 +4,19 @@ const functionToString = require('../src');
 
 const run = code => {
   return transform(code, {
-    plugins: [functionToString]
+    plugins: [
+      [functionToString, {
+        presets: [
+          ['env', {
+            targets: {
+              browsers: [
+                'Chrome >= 40'
+              ]
+            }
+          }]
+        ]
+      }]
+    ]
   }).code.trim();
 };
 
