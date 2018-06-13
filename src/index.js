@@ -25,10 +25,10 @@ const hasToStringComment = (t, path) => {
     }
     return result;
   };
-  comments = path.node && path.node.innerComments || [];
+  comments = path.innerComments || [];
   result = comments.some(some);
   if (!result) {
-    comments = path.node && path.node.body && path.node.body[0] && path.node.body[0].leadingComments || [];
+    comments = path.body && path.body[0] && path.body[0].leadingComments || [];
     result = comments.some(some);
   }
   return result;
@@ -56,18 +56,24 @@ module.exports = function (babel) {
 
   return {
     visitor: {
-      CallExpression(path, state) {
-        if (t.isMemberExpression(path.node.callee) && path.node.arguments.length === 0) {
-          const memberExpression = path.node.callee;
-          if (t.isFunctionExpression(memberExpression.object) && t.isIdentifier(memberExpression.property) && memberExpression.property.name === 'toString') {
-            path.replaceWith(t.stringLiteral(getCode(babel, state.opts, memberExpression.object)));
+      FunctionExpression(path, state) {
+        let found = false;
+        const memberExpression = path.parentPath;
+        if (t.isMemberExpression(memberExpression)) {
+          const identifier = memberExpression.node.property;
+          if (t.isIdentifier(identifier) && identifier.name === 'toString') {
+            const callExpression = memberExpression.parentPath;
+            if (t.isCallExpression(callExpression) && callExpression.node.arguments.length === 0) {
+              found = true;
+              callExpression.replaceWith(t.stringLiteral(getCode(babel, state.opts, path.node)));
+            }
           }
         }
-      },
-      BlockStatement(path, state) {
-        if (t.isFunctionExpression(path.parent) && hasToStringComment(t, path)) {
-          const functionExpression = path.parentPath;
-          functionExpression.replaceWith(t.stringLiteral(getCode(babel, state.opts, functionExpression.node)));
+        if (!found) {
+          const blockStatement = path.node.body;
+          if (t.isBlockStatement(blockStatement) && hasToStringComment(t, blockStatement)) {
+            path.replaceWith(t.stringLiteral(getCode(babel, state.opts, path.node)));
+          }
         }
       }
     }
