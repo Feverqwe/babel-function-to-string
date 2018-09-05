@@ -10,8 +10,8 @@
   "license": "ISC",
   "dependencies": {},
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-env": "^2.4.1",
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
     "babel-minify": "^0.4.3",
     "mocha": "^5.2.0"
   }

@@ -1,13 +1,13 @@
 const assert = require('assert');
-const {transform} = require('babel-core');
+const {transformSync} = require('@babel/core');
 const functionToString = require('../src');
 
 const run = code => {
-  return transform(code, {
+  return transformSync(code, {
     plugins: [
       [functionToString, {
         presets: [
-          ['env', {
+          ['@babel/preset-env', {
             targets: {
               browsers: [
                 'Chrome >= 40'

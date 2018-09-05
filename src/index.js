@@ -1,8 +1,9 @@
-const babelGenerator = require('babel-generator').default;
+const babelGenerator = require('@babel/generator').default;
 
 const babelOptions = {
+  ast: true,
   presets: [
-    ['env', {
+    ['@babel/preset-env', {
       targets: {
         browsers: [
           'Chrome >= 40',
@@ -37,7 +38,7 @@ const hasToStringComment = (t, path) => {
 const getCode = (babel, options, node) => {
   const { types: t } = babel;
   const code = babelGenerator(node, {minified: true}).code;
-  const result = babel.transform(`result=${code}`, Object.assign({}, babelOptions, options));
+  const result = babel.transformSync(`result=${code}`, Object.assign({}, babelOptions, options));
   const ast = result.ast;
   const expressionStatement = ast.program.body[0];
   if (!t.isExpressionStatement(expressionStatement)) {
